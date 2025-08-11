@@ -11,3 +11,6 @@ def update_score(player_id: str, points: int):
 def get_score(player_id: str):
     print(f"Consultando puntos para player_id={player_id}")
     return scores.get(player_id, 0)
+
+def get_all_scores():
+    return sorted(scores.items(), key=lambda x: x[1], reverse=True)

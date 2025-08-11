@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from backend.app.models import game
 from backend.app.routes import score_routes
+from backend.app.routes import difficulty_routes
 
 app = FastAPI(
     title="Backend Juego Reciclaje",
@@ -11,6 +12,7 @@ app = FastAPI(
 # Incluir rutas
 #app.include_router(game.router)
 app.include_router(score_routes.router)
+app.include_router(difficulty_routes.router)
 
 @app.get("/")
 def root():
