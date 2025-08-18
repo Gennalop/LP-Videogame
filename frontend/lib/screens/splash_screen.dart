@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Center(
         child: Text(
-          "Mi Juego",
+          "EchoCatch",
           style: TextStyle(
             color: Colors.white,
             fontSize: 32,
