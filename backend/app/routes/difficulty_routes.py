@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.app.models.game import Player
+from app.models.score import Player
 from backend.app.services.difficulty_service import set_difficulty, get_difficulty
 
 router = APIRouter()

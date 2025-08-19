@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class ConfiguracionPage extends StatefulWidget {
   const ConfiguracionPage({super.key});
@@ -10,129 +8,181 @@ class ConfiguracionPage extends StatefulWidget {
 }
 
 class _ConfiguracionPageState extends State<ConfiguracionPage> {
-  String _dificultad = 'medio';
-  List<Map<String, dynamic>> _ranking = [];
-  bool _isLoading = true;
-  final List<String> _opcionesDificultad = ['fácil', 'medio', 'difícil'];
-
-  @override
-  void initState() {
-    super.initState();
-    _cargarRanking();
-  }
-
-  Future<void> _cargarRanking() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/scores/top'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        setState(() {
-          _ranking = data.map((item) => {
-            'nombre': 'Jugador ${item['player_id']}',
-            'puntaje': item['score'],
-          }).toList();
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Error al cargar el ranking');
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
-  }
+  // Example state variables for the settings
+  double _volume = 0.5;
+  bool _soundEffectsEnabled = true;
+  String _difficultyLevel = 'Medio';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Configuración"),
-        centerTitle: true,
-      ),
-      body: Padding(
+        title: const Text(
+          "Configuraciones",
+          style: TextStyle(
+            color: Color(0xFF4C4C4C), // Dark grey for text
+            fontWeight: FontWeight.bold,
+          ),
+        ), 
+        backgroundColor: const Color(0xFFE8F5E9), // Light green for app bar
+        elevation: 0,
+      ), 
+      body: Container(
+        color: const Color(0xFFF1F8E9), // Very light green background
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            // Selector de dificultad
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Nivel de Dificultad",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            // Sound settings
+            _buildSectionTitle('Audio'),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Efectos de sonido', style: TextStyle(fontSize: 16)),
+                        Switch(
+                          value: _soundEffectsEnabled,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _soundEffectsEnabled = value;
+                            });
+                          },
+                          activeColor: const Color(0xFF8BC34A), // Green
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.volume_up, color: Color(0xFF689F38)), // Dark green icon
+                        Expanded(
+                          child: Slider(
+                            value: _volume,
+                            min: 0.0,
+                            max: 1.0,
+                            divisions: 10,
+                            label: (_volume * 100).round().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                _volume = value;
+                              });
+                            },
+                            activeColor: const Color(0xFF8BC34A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                DropdownButton<String>(
-                  value: _dificultad,
-                  isExpanded: true,
-                  items: _opcionesDificultad.map((String opcion) {
-                    return DropdownMenuItem<String>(
-                      value: opcion,
-                      child: Text(opcion.toUpperCase()),
-                    );
-                  }).toList(),
-                  onChanged: (String? nuevaDificultad) {
-                    setState(() {
-                      _dificultad = nuevaDificultad!;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Dificultad cambiada a $_dificultad'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 20),
-            
-            // Título del ranking
-            const Text(
-              "Mejores Puntajes",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+
+            // Game settings
+            _buildSectionTitle('Juego'),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Nivel de dificultad', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildDifficultyButton('Fácil'),
+                        _buildDifficultyButton('Medio'),
+                        _buildDifficultyButton('Difícil'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            
-            // Lista de ranking
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _ranking.isEmpty
-                      ? const Center(child: Text("No hay datos disponibles"))
-                      : ListView.builder(
-                          itemCount: _ranking.length,
-                          itemBuilder: (context, index) {
-                            final jugador = _ranking[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  child: Text((index + 1).toString()),
-                                ),
-                                title: Text(jugador['nombre']),
-                                trailing: Text(
-                                  jugador['puntaje'].toString(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+            const SizedBox(height: 20),
+
+            // Additional customizable options
+            _buildSectionTitle('Otras Opciones'),
+            _buildOptionTile(
+              context,
+              'Modo sin internet',
+              'El juego se puede jugar sin conexión.',
+              Icons.wifi_off,
+            ),
+            _buildOptionTile(
+              context,
+              'Sincronizar progreso',
+              'Guarda automáticamente tu avance en la nube.',
+              Icons.cloud_upload,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Helper method to create a title for a settings section
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF689F38), // Dark green
+        ),
+      ),
+    );
+  }
+
+  // Helper method to create difficulty buttons
+  Widget _buildDifficultyButton(String level) {
+    final bool isSelected = _difficultyLevel == level;
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _difficultyLevel = level;
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? const Color(0xFF8BC34A) : Colors.grey[200],
+        foregroundColor: isSelected ? Colors.white : Colors.black87,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Text(level),
+    );
+  }
+
+  // Helper method to create a list tile for an option
+  Widget _buildOptionTile(
+      BuildContext context, String title, String subtitle, IconData icon) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF689F38)),
+        title: Text(title, style: const TextStyle(fontSize: 16)),
+        subtitle: Text(subtitle),
+        onTap: () {
+          // Action for the tile
+        },
       ),
     );
   }

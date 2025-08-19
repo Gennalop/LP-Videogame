@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 #from backend.app.models import game
-from backend.app.routes import score_routes, stats_routes, difficulty_routes
+from .routes import score_routes, stats_routes, difficulty_routes
 
 app = FastAPI(
     title="Backend Juego Reciclaje",
