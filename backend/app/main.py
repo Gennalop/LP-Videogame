@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import score_routes, stats_routes
 
+
 app = FastAPI(
     title="Backend Juego Reciclaje",
     description="API para manejar puntajes, estadísticas y materiales",
@@ -26,8 +27,10 @@ app.add_middleware(
 # Incluir routers
 app.include_router(score_routes.router)
 app.include_router(stats_routes.router)
+app.include_router(difficulty_routes.router)
 
 # Ruta raíz para prueba rápida
 @app.get("/")
 def root():
     return {"message": "API del juego de reciclaje funcionando"}
+

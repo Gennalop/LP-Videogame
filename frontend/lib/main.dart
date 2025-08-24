@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/splash_screen.dart';
 
@@ -20,3 +21,4 @@ class ReciclajeGameApp extends StatelessWidget {
     );
   }
 }
+
