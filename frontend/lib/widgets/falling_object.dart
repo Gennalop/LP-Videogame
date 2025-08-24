@@ -3,30 +3,31 @@ import 'dart:async';
 import 'dart:math';
 
 class FallingObject extends StatefulWidget {
-  final Function(bool isCorrect, double x, double y) onObjectCaught;
-  final bool isPaused;
   final double initialX;
+  final bool isPaused;
+  final Function(bool isCorrect, double x, double y) onObjectCaught;
 
   const FallingObject({
     super.key,
-    required this.onObjectCaught,
+    required this.initialX,
     this.isPaused = false,
-    this.initialX = 0,
+    required this.onObjectCaught,
   });
 
   @override
-  _FallingObjectState createState() => _FallingObjectState();
+  FallingObjectState createState() => FallingObjectState();
 }
 
-class _FallingObjectState extends State<FallingObject> {
+class FallingObjectState extends State<FallingObject> {
   double top = 0;
   double left = 0;
-  Timer? timer;
+  late Timer timer;
   late GameObjectType currentObject;
   final Random random = Random();
+  bool paused = false;
+  bool caught = false;
 
   final List<GameObjectType> gameObjects = [
-    // Reciclables (sí suman puntos) → verde
     GameObjectType(
       id: 'paper',
       icon: Icons.description,
@@ -51,8 +52,6 @@ class _FallingObjectState extends State<FallingObject> {
       category: 'metal',
       isTrash: true,
     ),
-
-    // No reciclables (penalización si se atrapan) → rojo
     GameObjectType(
       id: 'battery',
       icon: Icons.battery_full,
@@ -79,56 +78,70 @@ class _FallingObjectState extends State<FallingObject> {
     ),
   ];
 
-
   @override
   void initState() {
     super.initState();
+    paused = widget.isPaused;
     left = widget.initialX;
     _generateNewObject();
-    if (!widget.isPaused) startFalling();
-  }
-
-  @override
-  void didUpdateWidget(covariant FallingObject oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPaused != oldWidget.isPaused) {
-      if (widget.isPaused) {
-        // Pausa: detener el timer
-        timer?.cancel();
-        timer = null;
-      } else {
-        // Reanuda: iniciar de nuevo
-        startFalling();
-      }
-    }
+    _startFalling();
   }
 
   void _generateNewObject() {
     currentObject = gameObjects[random.nextInt(gameObjects.length)];
     top = -60;
+    caught = false;
   }
 
-  void startFalling() {
-    timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!mounted || widget.isPaused) return;
+  void _startFalling() {
+    timer = Timer.periodic(const Duration(milliseconds: 50), (t) {
+      if (!mounted || paused) return;
 
       setState(() {
         top += 4;
-        widget.onObjectCaught(currentObject.isTrash, left, top);
-
         final screenHeight = MediaQuery.of(context).size.height;
+
+        if (!caught) {
+          widget.onObjectCaught(currentObject.isTrash, left, top);
+        }
+
         if (top > screenHeight) {
           _generateNewObject();
-          top = -60;
-          left = random.nextDouble() * (MediaQuery.of(context).size.width - 60);
         }
       });
     });
   }
 
+  void markCaught() {
+    caught = true;
+  }
+
+  void moveLeft() {
+    if (!paused && mounted && left > 0) {
+      setState(() {
+        left -= 30;
+      });
+    }
+  }
+
+  void moveRight() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (!paused && mounted && left < screenWidth - 60) {
+      setState(() {
+        left += 30;
+      });
+    }
+  }
+
+  void setPaused(bool value) {
+    setState(() {
+      paused = value;
+    });
+  }
+
   @override
   void dispose() {
-    timer?.cancel();
+    timer.cancel();
     super.dispose();
   }
 
@@ -137,35 +150,28 @@ class _FallingObjectState extends State<FallingObject> {
     return Positioned(
       top: top,
       left: left,
-      child: GestureDetector(
-        onTap: () {
-          if (!widget.isPaused) {
-            widget.onObjectCaught(currentObject.isTrash, left, top);
-            _generateNewObject();
-            top = -60;
-            left = random.nextDouble() * (MediaQuery.of(context).size.width - 60);
-          }
-        },
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: currentObject.color.withOpacity(0.9),
-            shape: BoxShape.circle,
-            border: Border.all(color: currentObject.color.withOpacity(0.7), width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: currentObject.color.withOpacity(0.9),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: currentObject.color.withOpacity(0.7),
+            width: 3,
           ),
-          child: Icon(
-            currentObject.icon,
-            size: 30,
-            color: Colors.white,
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          currentObject.icon,
+          size: 30,
+          color: Colors.white,
         ),
       ),
     );
