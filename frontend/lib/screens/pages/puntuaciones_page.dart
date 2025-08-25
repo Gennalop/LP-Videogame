@@ -50,15 +50,18 @@ class _PuntuacionesPageState extends State<PuntuacionesPage> {
         title: const Text(
           "Mejores Puntuaciones",
           style: TextStyle(
-            color: Color(0xFF4C4C4C),
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFE8F5E9),
-        elevation: 0,
+        backgroundColor: Colors.green,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFF689F38)),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
               setState(() {
                 _futurePuntuaciones = _obtenerPuntuaciones();

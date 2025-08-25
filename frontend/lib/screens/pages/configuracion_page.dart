@@ -20,12 +20,15 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         title: const Text(
           "Configuraciones",
           style: TextStyle(
-            color: Color(0xFF4C4C4C), // Dark grey for text
+            color: Colors.white, 
             fontWeight: FontWeight.bold,
           ),
         ), 
-        backgroundColor: const Color(0xFFE8F5E9), // Light green for app bar
-        elevation: 0,
+        backgroundColor: Colors.green, 
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ), 
       body: Container(
         color: const Color(0xFFF1F8E9), // Very light green background

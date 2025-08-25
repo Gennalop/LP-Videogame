@@ -14,9 +14,13 @@ class EstadisticasPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tus Estadísticas"),
+        title: const Text("Tus Estadísticas", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.green,
-      ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ), 
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
