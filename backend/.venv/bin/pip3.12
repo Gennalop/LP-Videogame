@@ -1,4 +1,4 @@
-#!/home/genesis/Documents/game/new/LP-Videogame/backend/.venv/bin/python
+#!/home/genesis/Documents/Game/LP-Videogame/backend/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

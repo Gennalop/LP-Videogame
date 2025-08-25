@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.models.score import Score
-from app.services.score_service import update_score, get_score
+from app.services.score_service import get_all_scores, update_score, get_score
 
 router = APIRouter()
 
@@ -27,3 +27,9 @@ def show_score(player_id: str):
 
     return {"player_id": player_id, 
             "total_points": total}
+
+@router.get("/ranking")
+def get_ranking():
+    ranking = get_all_scores()
+    return [{"player_id": player_id, "points": points} for player_id, points in ranking]
+

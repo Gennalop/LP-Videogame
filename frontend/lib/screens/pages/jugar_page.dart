@@ -6,6 +6,8 @@ import 'package:frontend/widgets/trash_bin.dart';
 import '../services/trash_service.dart';
 import 'game_over_page.dart';
 import 'win_page.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class JugarPage extends StatefulWidget {
   final String playerId;
@@ -153,6 +155,7 @@ class _JugarPageState extends State<JugarPage> {
   }
 
   void _goToGameOver() {
+    saveStats(won: false); 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -165,6 +168,7 @@ class _JugarPageState extends State<JugarPage> {
   }
 
   void _goToWinScreen() {
+    saveStats(won: true); 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const WinPage()),
@@ -310,4 +314,33 @@ class _JugarPageState extends State<JugarPage> {
       ),
     );
   }
+
+  Future<void> saveStats({required bool won}) async {
+  final stats = {
+    "jugador": "Player",
+    "points": score,
+    "vidas_restantes": lives,
+    "play_time": elapsedTime.toDouble(),
+    "objetos_reciclados": score,
+    "objetos_toxicos": 0, 
+    "errors": lives < 0 ? 0 : 0, 
+  };
+
+  try {
+    final response = await http.post(
+      Uri.parse("http://localhost:8000/stats/add"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(stats),
+    );
+
+    if (response.statusCode == 200) {
+      print("Estadísticas guardadas correctamente");
+    } else {
+      print("Error guardando estadísticas: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("Error enviando estadísticas: $e");
+  }
+}
+
 }

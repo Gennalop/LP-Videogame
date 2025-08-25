@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import score_routes, stats_routes
+from app.routes import score_routes, stats_routes, difficulty_routes
 from random import choice, uniform
 
 app = FastAPI(
@@ -27,6 +27,7 @@ app.add_middleware(
 # Incluir routers
 app.include_router(score_routes.router)
 app.include_router(stats_routes.router)
+app.include_router(difficulty_routes.router)
 
 colors = ["verde", "azul", "negro"]
 

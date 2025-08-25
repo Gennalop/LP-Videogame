@@ -26,6 +26,7 @@ class MainMenu extends StatelessWidget {
           child: Column(
             children: [
               // ---- Puntuación arriba a la derecha ----
+              /*
               Align(
                 alignment: Alignment.topRight,
                 child: Container(
@@ -48,7 +49,7 @@ class MainMenu extends StatelessWidget {
                   ),
                 ),
               ),
-
+              */
               const SizedBox(height: 40),
 
               // ---- Logo y título ----
@@ -93,7 +94,7 @@ class MainMenu extends StatelessWidget {
               ),
               MenuButton(
                 text: "Tus estadísticas",
-                page: const EstadisticasPage(),
+                page: const EstadisticasPage(jugador: "Player"),
                 backgroundColor: Colors.green,
                 icon: Icons.bar_chart,
                 textColor: Colors.white,
