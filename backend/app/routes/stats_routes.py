@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
-from app.models.stats import Stats
-from app.services.stats_service import add_stats_record, get_stats_history
+from backend.app.models.stats import Stats
+from backend.app.services.stats_service import add_stats_record, get_stats_history
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 

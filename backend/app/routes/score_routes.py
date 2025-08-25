@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.models.score import Score
+from backend.app.models.score import Score
 from backend.app.services.score_service import get_all_scores, update_score, get_score
 
 router = APIRouter()
