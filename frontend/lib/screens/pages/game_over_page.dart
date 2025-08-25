@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'jugar_page.dart';
 
 class GameOverPage extends StatelessWidget {
-  const GameOverPage({super.key});
+  final int score;
+  final int elapsedTime;
+
+  const GameOverPage({
+    super.key,
+    required this.score,
+    required this.elapsedTime,
+  });
 
   @override
   Widget build(BuildContext context) {

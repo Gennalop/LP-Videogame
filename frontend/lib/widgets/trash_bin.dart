@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 class TrashBin extends StatelessWidget {
-  final double width; // Añadido
+  final double width;
+  final String color;
 
-  const TrashBin({super.key, this.width = 120}); // valor por defecto
+  const TrashBin({super.key, required this.width, required this.color});
 
   @override
   Widget build(BuildContext context) {
+    Color binColor = Colors.grey;
+    if (color == "verde") binColor = Colors.green;
+    if (color == "azul") binColor = Colors.blue;
+    if (color == "negro") binColor = Colors.black;
+
     return Container(
-      width: width, // usar ancho
+      width: width,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: binColor,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Center(
-        child: Icon(Icons.delete, color: Colors.white, size: 40),
       ),
     );
   }
 }
-

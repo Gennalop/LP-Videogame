@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../widgets/falling_object.dart';
-import '../../widgets/trash_bin.dart';
-import '../../widgets/score_panel.dart';
+import 'package:frontend/widgets/falling_object.dart';
+import 'package:frontend/widgets/trash_bin.dart';
+import '../services/trash_service.dart';
 import 'game_over_page.dart';
 import 'win_page.dart';
 
 class JugarPage extends StatefulWidget {
   final String playerId;
-
   const JugarPage({super.key, this.playerId = "jugador1"});
 
   @override
@@ -20,60 +19,107 @@ class _JugarPageState extends State<JugarPage> {
   int score = 0;
   int lives = 3;
   bool isPaused = false;
+  String currentTrashColor = "verde";
+  int elapsedTime = 0;
+
   final Random random = Random();
   double trashLeft = 100;
-  final double trashWidth = 120;
+  final double trashWidth = 110;
 
   List<FallingObject> fallingObjects = [];
   List<GlobalKey<FallingObjectState>> objectKeys = [];
 
+  Timer? spawnTimer;
+  Timer? gameTimer;
+
   @override
   void initState() {
     super.initState();
-    // Generar un objeto cada 1.5 segundos
-    Timer.periodic(const Duration(milliseconds: 1500), (timer) {
-      if (lives <= 0 || score >= 20) {
+
+    spawnTimer = Timer.periodic(const Duration(milliseconds: 2700), (timer) {
+      if (lives <= 0) {
         timer.cancel();
         return;
       }
-      spawnObject();
+      if (!isPaused) {
+        spawnObject();
+      }
+    });
+
+    gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!isPaused) {
+        setState(() => elapsedTime++);
+      }
     });
   }
 
-  void spawnObject() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final posX = random.nextDouble() * (screenWidth - 60);
+  @override
+  void dispose() {
+    spawnTimer?.cancel();
+    gameTimer?.cancel();
+    super.dispose();
+  }
 
-    final objKey = GlobalKey<FallingObjectState>();
+  void spawnObject() async {
+    try {
+      final trashData = await TrashService.fetchTrashData();
+      final color = trashData["color"];
+      final speed = trashData["speed"];
 
-    final obj = FallingObject(
-      key: objKey,
-      initialX: posX,
-      isPaused: isPaused,
-      onObjectCaught: (isCorrect, objX, objY) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final trashTop = screenHeight - 160;
-        final trashBottom = trashTop + 80;
-        final trashRight = trashLeft + trashWidth;
+      final screenWidth = MediaQuery.of(context).size.width;
 
-        if (objY + 60 >= trashTop &&
-            objY <= trashBottom &&
-            objX + 60 >= trashLeft &&
-            objX <= trashRight) {
-          objKey.currentState?.markCaught();
-          if (isCorrect) {
-            increaseScore();
-          } else {
-            decreaseLives();
+      double posX;
+      bool validPos;
+      int attempts = 0;
+      do {
+        posX = random.nextDouble() * (screenWidth - 60);
+        validPos = true;
+        for (var key in objectKeys) {
+          final obj = key.currentState;
+          if (obj != null && !obj.caught && !obj.reachedGround) {
+            if ((obj.widget.initialX - posX).abs() < 140) {
+              validPos = false;
+              break;
+            }
           }
         }
-      },
-    );
+        attempts++;
+      } while (!validPos && attempts < 15);
 
-    setState(() {
-      fallingObjects.add(obj);
-      objectKeys.add(objKey);
-    });
+      final objKey = GlobalKey<FallingObjectState>();
+
+      final obj = FallingObject(
+        key: objKey,
+        initialX: posX,
+        speed: speed,
+        color: color,
+        onObjectCaught: (objColor, objX, objY) {
+          final screenHeight = MediaQuery.of(context).size.height;
+          final trashTop = screenHeight - 160;
+          final trashBottom = trashTop + 80;
+          final trashRight = trashLeft + trashWidth;
+
+          if (objY + 60 >= trashTop &&
+              objY <= trashBottom &&
+              objX + 60 >= trashLeft &&
+              objX <= trashRight) {
+            objKey.currentState?.markCaught();
+            if (objColor == currentTrashColor) {
+              increaseScore();
+            } else {
+              decreaseLives();
+            }
+          }
+        },
+      );
+
+      setState(() {
+        fallingObjects.add(obj);
+        objectKeys.add(objKey);
+      });
+    } catch (e) {
+      print("Error generando basura: $e");
+    }
   }
 
   void increaseScore() {
@@ -99,23 +145,22 @@ class _JugarPageState extends State<JugarPage> {
     });
   }
 
-  void moveTrashLeft() {
-    setState(() {
-      trashLeft = max(0, trashLeft - 30);
-    });
-  }
-
+  void moveTrashLeft() =>
+      setState(() => trashLeft = max(0, trashLeft - 30));
   void moveTrashRight() {
     final screenWidth = MediaQuery.of(context).size.width;
-    setState(() {
-      trashLeft = min(screenWidth - trashWidth, trashLeft + 30);
-    });
+    setState(() => trashLeft = min(screenWidth - trashWidth, trashLeft + 30));
   }
 
   void _goToGameOver() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const GameOverPage()),
+      MaterialPageRoute(
+        builder: (context) => GameOverPage(
+          score: score,
+          elapsedTime: elapsedTime,
+        ),
+      ),
     );
   }
 
@@ -129,67 +174,139 @@ class _JugarPageState extends State<JugarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Juego")),
       body: Stack(
         children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: ScorePanel(score: score, lives: lives),
+          // 🎨 Fondo con degradado cielo
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.lightBlueAccent, Colors.white],
+              ),
+            ),
           ),
-          ...fallingObjects,
+
+          // 📊 Score Panel + Botón regresar
           Positioned(
-            bottom: 80,
-            left: trashLeft,
-            child: TrashBin(width: trashWidth),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 80,
+            top: 30,
+            left: 20,
+            right: 20,
             child: Container(
-              color: Colors.grey.shade200,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black87.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: moveTrashLeft,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(15),
-                    ),
-                    child: const Icon(Icons.arrow_back, size: 24),
+                  // 🔙 Botón regresar
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
-                  ElevatedButton(
-                    onPressed: togglePause,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isPaused ? Colors.green : Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(20),
-                    ),
-                    child: Icon(
-                      isPaused ? Icons.play_arrow : Icons.pause,
-                      size: 28,
+
+                  // ❤️ Vidas
+                  Row(
+                    children: List.generate(
+                      lives,
+                      (index) => const Icon(Icons.favorite, color: Colors.red),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: moveTrashRight,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(15),
-                    ),
-                    child: const Icon(Icons.arrow_forward, size: 24),
+
+                  // ⭐ Puntaje
+                  Text(
+                    "Score: $score",
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+
+                  // ⏱ Tiempo
+                  Text(
+                    "⏱ $elapsedTime s",
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ],
               ),
             ),
           ),
+
+          // 🗑️ Basurero
+          ...fallingObjects,
+          Positioned(
+            bottom: 100,
+            left: trashLeft,
+            child: TrashBin(width: trashWidth, color: currentTrashColor),
+          ),
+
+          // 🎮 Controles
+          _buildControls(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildControls() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 100,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.brown[300], // 🌱 Color tierra
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: moveTrashLeft,
+                  child: const Icon(Icons.arrow_back),
+                ),
+                ElevatedButton(
+                  onPressed: togglePause,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isPaused ? Colors.green : Colors.red,
+                  ),
+                  child: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                ),
+                ElevatedButton(
+                  onPressed: moveTrashRight,
+                  child: const Icon(Icons.arrow_forward),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () =>
+                      setState(() => currentTrashColor = "verde"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: const Text("Verde"),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      setState(() => currentTrashColor = "azul"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  child: const Text("Azul"),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      setState(() => currentTrashColor = "negro"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                  child: const Text("Negro",
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

@@ -26,35 +26,36 @@ class ComojugarPage extends StatelessWidget {
               const SizedBox(height: 15),
 
               const Text(
-                "1️⃣ Tu objetivo es atrapar los objetos de basura en el "
-                "contenedor ubicado al final de la pantalla.\n",
+                "1️⃣ Tu objetivo es atrapar los objetos de basura que caen en el "
+                "contenedor ubicado en la parte inferior de la pantalla.\n",
                 style: TextStyle(fontSize: 18),
               ),
 
               const Text(
-                "2️⃣ Usa los botones de izquierda y derecha para mover el objeto "
-                "y atraparlos correctamente.\n",
+                "2️⃣ Usa los botones ⬅️ (izquierda) y ➡️ (derecha) para mover el contenedor "
+                "y posicionarte debajo de los objetos.\n",
                 style: TextStyle(fontSize: 18),
               ),
 
               const Text(
-                "3️⃣ Si dejas caer un objeto de basura, perderás una vida.\n",
+                "3️⃣ El botón ⏸️ del medio te permite pausar y reanudar la partida en cualquier momento.\n",
                 style: TextStyle(fontSize: 18),
               ),
 
               const Text(
-                "4️⃣ Si atrapas un objeto incorrecto, perderás tanto un punto "
-                "como una vida.\n",
+                "4️⃣ Cada objeto atrapado correctamente aumenta tu ⭐ puntaje.\n",
                 style: TextStyle(fontSize: 18),
               ),
 
               const Text(
-                "5️⃣ Puedes pausar y reanudar la partida en cualquier momento "
-                "usando el botón del medio.\n",
+                "5️⃣ Si dejas caer un objeto o atrapas algo incorrecto, perderás una ❤️ vida.\n",
                 style: TextStyle(fontSize: 18),
               ),
 
-              const SizedBox(height: 20),
+              const Text(
+                "6️⃣ El juego termina cuando se acaban tus vidas o el tiempo ⏱️ llega a cero.\n",
+                style: TextStyle(fontSize: 18),
+              ),
             ],
           ),
         ),
@@ -62,4 +63,3 @@ class ComojugarPage extends StatelessWidget {
     );
   }
 }
-
