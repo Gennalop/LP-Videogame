@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 // Modelo de datos para una puntuación
@@ -30,17 +32,20 @@ class _PuntuacionesPageState extends State<PuntuacionesPage> {
 
   // Simula una llamada a una API para obtener las puntuaciones
   Future<List<Puntuacion>> _obtenerPuntuaciones() async {
-    // Retraso de 2 segundos para simular una carga de red
-    await Future.delayed(const Duration(seconds: 2));
+    final url = Uri.parse('http://127.0.0.1:8000/ranking'); // Cambia la URL si es necesario
+    final response = await http.get(url);
 
-    // Datos de ejemplo para el ranking
-    return [
-      Puntuacion(nombreJugador: "Estrella", puntuacion: 2500),
-      Puntuacion(nombreJugador: "Génesis", puntuacion: 2350),
-      Puntuacion(nombreJugador: "Christopher", puntuacion: 2100),
-      Puntuacion(nombreJugador: "Austin", puntuacion: 1980),
-      Puntuacion(nombreJugador: "Jugador Anónimo", puntuacion: 1700),
-    ];
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((item) {
+        return Puntuacion(
+          nombreJugador: item['player_id'],
+          puntuacion: item['points'],
+        );
+      }).toList();
+    } else {
+      throw Exception('Error al obtener las puntuaciones');
+    }
   }
 
   @override

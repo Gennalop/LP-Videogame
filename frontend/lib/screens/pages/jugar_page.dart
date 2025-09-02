@@ -1,15 +1,26 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/main_menu.dart';
 import 'package:frontend/widgets/falling_object.dart';
 import 'package:frontend/widgets/trash_bin.dart';
 import '../services/trash_service.dart';
 import '../services/stats_service.dart';
 import 'game_over_page.dart';
 import 'win_page.dart';
+import 'package:http/http.dart' as http;
 
 class JugarPage extends StatefulWidget {
-  const JugarPage({super.key});
+  //final String playerId;
+  final String difficulty; // Nueva propiedad para la dificultad
+
+  const JugarPage({
+    super.key,
+    //this.playerId = "jugador1",
+    this.difficulty = "Medio", // Valor predeterminado
+  });
+
   @override
   JugarPageState createState() => JugarPageState();
 }
@@ -40,7 +51,21 @@ class JugarPageState extends State<JugarPage> {
   @override
   void initState() {
     super.initState();
-    // Genera basura periódicamente
+
+    // Ajustar el juego según la dificultad
+    switch (widget.difficulty) {
+      case "Fácil":
+        lives = 5; // Más vidas
+        break;
+      case "Medio":
+        lives = 3; // Vidas predeterminadas
+        break;
+      case "Difícil":
+        lives = 2; // Menos vidas
+        break;
+    }
+
+    // Genera basura periodicamente
     spawnTimer = Timer.periodic(const Duration(milliseconds: 3200), (timer) {
       if (lives <= 0) {
         timer.cancel();
@@ -174,6 +199,29 @@ class JugarPageState extends State<JugarPage> {
     setState(() => trashLeft = min(screenWidth - trashWidth, trashLeft + 30));
   }
 
+  Future<void> updateScore(String player) async {
+    final scoreData = {
+      "player_id": player,
+      "points": score,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse("http://localhost:8000/score/update"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(scoreData),
+      );
+
+      if (response.statusCode == 200) {
+        print("Puntaje actualizado correctamente");
+      } else {
+        print("Error actualizando puntaje: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error enviando puntaje: $e");
+    }
+  }
+
   void _goToGameOver() {
     StatsService().saveStats(
       win: false,
@@ -184,6 +232,7 @@ class JugarPageState extends State<JugarPage> {
       objetosAzules: score_azules,
       objetosNegros: score_negros,
     );
+    updateScore("Jugador 1"); // Llama a la función para actualizar el puntaje
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -205,6 +254,7 @@ class JugarPageState extends State<JugarPage> {
       objetosAzules: score_azules,
       objetosNegros: score_negros,
     );
+    updateScore("Jugador 1"); // Llama a la función para actualizar el puntaje
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const WinPage()),
@@ -249,7 +299,11 @@ class JugarPageState extends State<JugarPage> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MainMenu()),
+                        (route) => false, // Elimina todas las rutas anteriores
+                      );
                     },
                   ),
                   // Vidas
@@ -355,6 +409,4 @@ class JugarPageState extends State<JugarPage> {
       ),
     );
   }
-
-  
 }

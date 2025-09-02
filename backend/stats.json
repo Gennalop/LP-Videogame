@@ -18,5 +18,15 @@
     "objetos_verdes": 14,
     "objetos_azules": 1,
     "objetos_negros": 5
+  },
+  {
+    "created_at": "2025-09-02T14:31:21.404",
+    "win": false,
+    "points": 1,
+    "vidas_restantes": 0,
+    "play_time": 29.0,
+    "objetos_verdes": 1,
+    "objetos_azules": 0,
+    "objetos_negros": 0
   }
 ]
