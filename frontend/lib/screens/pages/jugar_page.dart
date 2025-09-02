@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/main_menu.dart';
 import 'package:frontend/widgets/falling_object.dart';
 import 'package:frontend/widgets/trash_bin.dart';
 import '../services/trash_service.dart';
@@ -11,7 +12,13 @@ import 'package:http/http.dart' as http;
 
 class JugarPage extends StatefulWidget {
   final String playerId;
-  const JugarPage({super.key, this.playerId = "jugador1"});
+  final String difficulty; // Nueva propiedad para la dificultad
+
+  const JugarPage({
+    super.key,
+    this.playerId = "jugador1",
+    this.difficulty = "Medio", // Valor predeterminado
+  });
 
   @override
   _JugarPageState createState() => _JugarPageState();
@@ -38,6 +45,20 @@ class _JugarPageState extends State<JugarPage> {
   void initState() {
     super.initState();
 
+    // Ajustar el juego según la dificultad
+    switch (widget.difficulty) {
+      case "Fácil":
+        lives = 5; // Más vidas
+        break;
+      case "Medio":
+        lives = 3; // Vidas predeterminadas
+        break;
+      case "Difícil":
+        lives = 2; // Menos vidas
+        break;
+    }
+
+    // Configurar el temporizador y otros elementos del juego
     spawnTimer = Timer.periodic(const Duration(milliseconds: 2700), (timer) {
       if (lives <= 0) {
         timer.cancel();
@@ -154,8 +175,31 @@ class _JugarPageState extends State<JugarPage> {
     setState(() => trashLeft = min(screenWidth - trashWidth, trashLeft + 30));
   }
 
+  Future<void> updateScore() async {
+    final scoreData = {
+      "player_id": widget.playerId,
+      "points": score,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse("http://localhost:8000/score/update"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(scoreData),
+      );
+
+      if (response.statusCode == 200) {
+        print("Puntaje actualizado correctamente");
+      } else {
+        print("Error actualizando puntaje: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error enviando puntaje: $e");
+    }
+  }
+
   void _goToGameOver() {
-    saveStats(won: false); 
+    updateScore(); // Llama a la función para actualizar el puntaje
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -168,7 +212,7 @@ class _JugarPageState extends State<JugarPage> {
   }
 
   void _goToWinScreen() {
-    saveStats(won: true); 
+    updateScore(); // Llama a la función para actualizar el puntaje
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const WinPage()),
@@ -209,7 +253,11 @@ class _JugarPageState extends State<JugarPage> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MainMenu()),
+                        (route) => false, // Elimina todas las rutas anteriores
+                      );
                     },
                   ),
 
@@ -314,33 +362,4 @@ class _JugarPageState extends State<JugarPage> {
       ),
     );
   }
-
-  Future<void> saveStats({required bool won}) async {
-  final stats = {
-    "jugador": "Player",
-    "points": score,
-    "vidas_restantes": lives,
-    "play_time": elapsedTime.toDouble(),
-    "objetos_reciclados": score,
-    "objetos_toxicos": 0, 
-    "errors": lives < 0 ? 0 : 0, 
-  };
-
-  try {
-    final response = await http.post(
-      Uri.parse("http://localhost:8000/stats/add"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(stats),
-    );
-
-    if (response.statusCode == 200) {
-      print("Estadísticas guardadas correctamente");
-    } else {
-      print("Error guardando estadísticas: ${response.statusCode}");
-    }
-  } catch (e) {
-    print("Error enviando estadísticas: $e");
-  }
-}
-
 }

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import score_routes, stats_routes, difficulty_routes
+from .routes import score_routes, stats_routes, difficulty_routes
 from random import choice, uniform
 
 app = FastAPI(

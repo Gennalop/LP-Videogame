@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/pages/jugar_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ConfiguracionPage extends StatefulWidget {
   const ConfiguracionPage({super.key});
@@ -130,6 +133,35 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
               'Guarda automáticamente tu avance en la nube.',
               Icons.cloud_upload,
             ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JugarPage(
+                      playerId: "jugador1", // Cambia esto según corresponda
+                      difficulty: _difficultyLevel, // Pasa la dificultad seleccionada
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white, backgroundColor: const Color(0xFF8BC34A), // White text
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ), 
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: const Text(
+                  'JUGAR',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -159,6 +191,8 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         setState(() {
           _difficultyLevel = level;
         });
+        // Save the difficulty level to the server
+        saveDifficulty("jugador1", level); // Cambia "jugador1" según corresponda
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: isSelected ? const Color(0xFF8BC34A) : Colors.grey[200],
@@ -188,5 +222,20 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
         },
       ),
     );
+  }
+
+  Future<void> saveDifficulty(String playerId, String difficulty) async {
+    final url = Uri.parse("http://127.0.0.1:8000/player/$playerId/difficulty");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"player_id": playerId, "difficulty": difficulty}),
+    );
+
+    if (response.statusCode == 200) {
+      print("Dificultad guardada correctamente");
+    } else {
+      print("Error guardando dificultad: ${response.statusCode}");
+    }
   }
 }
