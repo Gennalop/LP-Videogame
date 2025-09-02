@@ -6,6 +6,7 @@ class FallingObject extends StatefulWidget {
   final double speed;
   final String color;
   final String image; 
+  final double width;
   final String? category;
   final Function(String objColor, double objX, double objY) onObjectCaught;
 
@@ -15,6 +16,7 @@ class FallingObject extends StatefulWidget {
     required this.speed,
     required this.color,
     required this.image,
+    required this.width,
     this.category,
     required this.onObjectCaught,
   });
@@ -45,7 +47,7 @@ class FallingObjectState extends State<FallingObject> {
         widget.onObjectCaught(widget.color, widget.initialX, posY);
 
         final screenHeight = MediaQuery.of(context).size.height;
-        final groundLevel = screenHeight - 80; //REVISAR
+        final groundLevel = screenHeight - 80;
 
         if (posY >= groundLevel) {
           setState(() {
@@ -78,7 +80,7 @@ class FallingObjectState extends State<FallingObject> {
     return Positioned(
       top: posY,
       left: widget.initialX,
-      child: Image.asset(widget.image, width: 60, height: 60),
+      child: Image.asset(widget.image, width: widget.width, height: widget.width),
     );
   }
 }

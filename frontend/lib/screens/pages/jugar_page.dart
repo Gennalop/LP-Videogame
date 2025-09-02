@@ -38,6 +38,7 @@ class JugarPageState extends State<JugarPage> {
   int elapsedTime = 0;
 
   final double objectWidth = 60.0;
+  final double groundHeight = 90.0;
   final double trashWidth = 110;
   final double trashHeight = 100;
   double trashLeft = 100; //posición horizontal (X) del basurero en la pantalla.
@@ -102,8 +103,8 @@ class JugarPageState extends State<JugarPage> {
 
       double posX;
       bool validPos;
-      int attempts = 0;
-      double margin = 5.0;
+      int attempts = 0; 
+      double margin = 5.0; //5.0 es el margen esperado entre un objeto y el siguiente
 
       do {
         posX = random.nextDouble() * (screenWidth - objectWidth);
@@ -122,7 +123,7 @@ class JugarPageState extends State<JugarPage> {
           }
         }
         attempts++;
-      } while (!validPos && attempts < 15);
+      } while (!validPos && attempts < 15); //15 intentos para encontrar un posX
 
       final objKey = GlobalKey<FallingObjectState>();
 
@@ -132,16 +133,17 @@ class JugarPageState extends State<JugarPage> {
         speed: speed,
         color: color,
         image: image,
+        width: objectWidth,
         category: category,
         onObjectCaught: (objColor, objX, objY) {
           final screenHeight = MediaQuery.of(context).size.height;
-          final trashTop = screenHeight - 160;
-          final trashBottom = trashTop + 80;
+          final trashTop = screenHeight - trashHeight - groundHeight;
+          final trashBottom = trashTop + trashHeight;
           final trashRight = trashLeft + trashWidth;
 
-          if (objY + 60 >= trashTop &&
+          if (objY + objectWidth >= trashTop &&
               objY <= trashBottom &&
-              objX + 60 >= trashLeft &&
+              objX + objectWidth >= trashLeft &&
               objX <= trashRight) {
             objKey.currentState?.markCaught();
             
@@ -192,7 +194,7 @@ class JugarPageState extends State<JugarPage> {
     });
   }
 
-  void moveTrashLeft() => setState(() => trashLeft = max(0, trashLeft - 30));
+  void moveTrashLeft() => setState(() => trashLeft = max(0, trashLeft - 30)); //30 representa el desplazamiento
   
   void moveTrashRight() {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -271,7 +273,7 @@ class JugarPageState extends State<JugarPage> {
             top: 0,
             left: 0,
             right: 0,
-            height: MediaQuery.of(context).size.height - 90,
+            height: MediaQuery.of(context).size.height - groundHeight,
             child: Image.asset(
               "assets/images/background.png",
               fit: BoxFit.cover,          
@@ -332,7 +334,7 @@ class JugarPageState extends State<JugarPage> {
 
           // Basurero
           Positioned(
-            bottom: 90,
+            bottom: groundHeight,
             left: trashLeft,
             child: TrashBin(width: trashWidth, height: trashHeight, color: currentTrashColor),
           ),
@@ -349,7 +351,7 @@ class JugarPageState extends State<JugarPage> {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 90,
+      height: groundHeight,
       child: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
