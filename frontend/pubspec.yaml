@@ -24,4 +24,6 @@ flutter:
     - assets/images/trash/azul/
     - assets/images/trash/verde/
     - assets/images/trash/negro/
+    - assets/images/background.png
+    - assets/images/ground.jpg
 

@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 class FallingObject extends StatefulWidget {
   final double initialX;
   final double speed;
   final String color;
+  final String image; 
+  final String? category;
   final Function(String objColor, double objX, double objY) onObjectCaught;
 
   const FallingObject({
@@ -13,6 +14,8 @@ class FallingObject extends StatefulWidget {
     required this.initialX,
     required this.speed,
     required this.color,
+    required this.image,
+    this.category,
     required this.onObjectCaught,
   });
 
@@ -27,27 +30,10 @@ class FallingObjectState extends State<FallingObject> {
   bool reachedGround = false;
 
   Timer? fallTimer;
-  late String chosenImage;
 
   @override
   void initState() {
     super.initState();
-
-    final images = {
-      "verde": [
-        "assets/images/trash/verde/1.png",
-        "assets/images/trash/verde/2.png"
-      ],
-      "azul": [
-        "assets/images/trash/azul/a1.png",
-        "assets/images/trash/azul/a2.png"
-      ],
-      "negro": ["assets/images/trash/negro/n1.png"],
-    };
-
-    final imgList = images[widget.color] ?? ["assets/default.png"];
-    chosenImage = imgList[Random().nextInt(imgList.length)];
-
     startFalling();
   }
 
@@ -59,7 +45,7 @@ class FallingObjectState extends State<FallingObject> {
         widget.onObjectCaught(widget.color, widget.initialX, posY);
 
         final screenHeight = MediaQuery.of(context).size.height;
-        final groundLevel = screenHeight - 80;
+        final groundLevel = screenHeight - 80; //REVISAR
 
         if (posY >= groundLevel) {
           setState(() {
@@ -92,7 +78,7 @@ class FallingObjectState extends State<FallingObject> {
     return Positioned(
       top: posY,
       left: widget.initialX,
-      child: Image.asset(chosenImage, width: 60, height: 60),
+      child: Image.asset(widget.image, width: 60, height: 60),
     );
   }
 }

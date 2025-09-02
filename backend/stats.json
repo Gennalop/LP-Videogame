@@ -1,1 +1,22 @@
-{"jugador1": [{"jugador": "jugador1", "points": 0, "vidas_restantes": 0, "play_time": 20.0, "objetos_reciclados": 0, "objetos_toxicos": 0, "errors": 0}, {"jugador": "jugador1", "points": 2, "vidas_restantes": 0, "play_time": 28.0, "objetos_reciclados": 2, "objetos_toxicos": 0, "errors": 0}], "Player": [{"jugador": "Player", "points": 1, "vidas_restantes": 0, "play_time": 23.0, "objetos_reciclados": 1, "objetos_toxicos": 0, "errors": 0}]}
+[
+  {
+    "created_at": "2025-09-02T14:07:25.022",
+    "win": false,
+    "points": 0,
+    "vidas_restantes": 0,
+    "play_time": 19.0,
+    "objetos_verdes": 0,
+    "objetos_azules": 0,
+    "objetos_negros": 0
+  },
+  {
+    "created_at": "2025-09-02T14:09:35.397",
+    "win": true,
+    "points": 20,
+    "vidas_restantes": 2,
+    "play_time": 102.0,
+    "objetos_verdes": 14,
+    "objetos_azules": 1,
+    "objetos_negros": 5
+  }
+]

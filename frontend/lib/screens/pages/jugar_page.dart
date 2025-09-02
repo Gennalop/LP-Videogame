@@ -4,29 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:frontend/widgets/falling_object.dart';
 import 'package:frontend/widgets/trash_bin.dart';
 import '../services/trash_service.dart';
+import '../services/stats_service.dart';
 import 'game_over_page.dart';
 import 'win_page.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class JugarPage extends StatefulWidget {
-  final String playerId;
-  const JugarPage({super.key, this.playerId = "jugador1"});
-
+  const JugarPage({super.key});
   @override
-  _JugarPageState createState() => _JugarPageState();
+  JugarPageState createState() => JugarPageState();
 }
 
-class _JugarPageState extends State<JugarPage> {
-  int score = 0;
-  int lives = 3;
-  bool isPaused = false;
+class JugarPageState extends State<JugarPage> {
+  final Random random = Random();
   String currentTrashColor = "verde";
+  bool isPaused = false;
+
+  int score = 0;
+  int score_verdes = 0;
+  int score_azules = 0;
+  int score_negros = 0;
+  int lives = 3;
   int elapsedTime = 0;
 
-  final Random random = Random();
-  double trashLeft = 100;
+  final double objectWidth = 60.0;
   final double trashWidth = 110;
+  final double trashHeight = 100;
+  double trashLeft = 100; //posición horizontal (X) del basurero en la pantalla.
 
   List<FallingObject> fallingObjects = [];
   List<GlobalKey<FallingObjectState>> objectKeys = [];
@@ -37,8 +40,8 @@ class _JugarPageState extends State<JugarPage> {
   @override
   void initState() {
     super.initState();
-
-    spawnTimer = Timer.periodic(const Duration(milliseconds: 2700), (timer) {
+    // Genera basura periódicamente
+    spawnTimer = Timer.periodic(const Duration(milliseconds: 3200), (timer) {
       if (lives <= 0) {
         timer.cancel();
         return;
@@ -47,7 +50,7 @@ class _JugarPageState extends State<JugarPage> {
         spawnObject();
       }
     });
-
+    // Aumenta el tiempo jugado cada segundo
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPaused) {
         setState(() => elapsedTime++);
@@ -66,20 +69,28 @@ class _JugarPageState extends State<JugarPage> {
     try {
       final trashData = await TrashService.fetchTrashData();
       final color = trashData["color"];
-      final speed = trashData["speed"];
+      final speed = (trashData["speed"] as num).toDouble();
+      final image = "assets/images/${trashData["image"]}";
+      final category = trashData["category"];
 
       final screenWidth = MediaQuery.of(context).size.width;
 
       double posX;
       bool validPos;
       int attempts = 0;
+      double margin = 5.0;
+
       do {
-        posX = random.nextDouble() * (screenWidth - 60);
+        posX = random.nextDouble() * (screenWidth - objectWidth);
         validPos = true;
         for (var key in objectKeys) {
           final obj = key.currentState;
           if (obj != null && !obj.caught && !obj.reachedGround) {
-            if ((obj.widget.initialX - posX).abs() < 140) {
+            final existingX = obj.widget.initialX;
+            final leftLimit = existingX - margin;
+            final rightLimit = existingX + (objectWidth + margin);
+
+            if (posX > leftLimit && posX < rightLimit) {
               validPos = false;
               break;
             }
@@ -95,6 +106,8 @@ class _JugarPageState extends State<JugarPage> {
         initialX: posX,
         speed: speed,
         color: color,
+        image: image,
+        category: category,
         onObjectCaught: (objColor, objX, objY) {
           final screenHeight = MediaQuery.of(context).size.height;
           final trashTop = screenHeight - 160;
@@ -106,15 +119,15 @@ class _JugarPageState extends State<JugarPage> {
               objX + 60 >= trashLeft &&
               objX <= trashRight) {
             objKey.currentState?.markCaught();
+            
             if (objColor == currentTrashColor) {
-              increaseScore();
+              increaseScore(currentTrashColor);
             } else {
               decreaseLives();
             }
           }
         },
       );
-
       setState(() {
         fallingObjects.add(obj);
         objectKeys.add(objKey);
@@ -124,10 +137,17 @@ class _JugarPageState extends State<JugarPage> {
     }
   }
 
-  void increaseScore() {
+  void increaseScore(String color) {
     setState(() {
       score++;
-      if (score >= 20) _goToWinScreen();
+      if (color == "verde") {
+        score_verdes++;
+      } else if (color == "azul") {
+        score_azules++;
+      } else if (color == "negro") {
+        score_negros++;
+      }
+      if (score >= 5) _goToWinScreen();
     });
   }
 
@@ -147,15 +167,23 @@ class _JugarPageState extends State<JugarPage> {
     });
   }
 
-  void moveTrashLeft() =>
-      setState(() => trashLeft = max(0, trashLeft - 30));
+  void moveTrashLeft() => setState(() => trashLeft = max(0, trashLeft - 30));
+  
   void moveTrashRight() {
     final screenWidth = MediaQuery.of(context).size.width;
     setState(() => trashLeft = min(screenWidth - trashWidth, trashLeft + 30));
   }
 
   void _goToGameOver() {
-    saveStats(won: false); 
+    StatsService().saveStats(
+      win: false,
+      points: score,
+      vidasRestantes: lives,
+      playTime: elapsedTime.toDouble(),
+      objetosVerdes: score_verdes,
+      objetosAzules: score_azules,
+      objetosNegros: score_negros,
+    );
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -168,7 +196,15 @@ class _JugarPageState extends State<JugarPage> {
   }
 
   void _goToWinScreen() {
-    saveStats(won: true); 
+    StatsService().saveStats(
+      win: true,
+      points: score,
+      vidasRestantes: lives,
+      playTime: elapsedTime.toDouble(),
+      objetosVerdes: score_verdes,
+      objetosAzules: score_azules,
+      objetosNegros: score_negros,
+    );
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const WinPage()),
@@ -180,18 +216,22 @@ class _JugarPageState extends State<JugarPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // 🎨 Fondo con degradado cielo
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.lightBlueAccent, Colors.white],
-              ),
+          // Fondo
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height - 90,
+            child: Image.asset(
+              "assets/images/background.png",
+              fit: BoxFit.cover,          
+              alignment: Alignment.bottomLeft,
             ),
           ),
 
-          // 📊 Score Panel + Botón regresar
+          ...fallingObjects,
+
+          // Score Panel + Botón regresar
           Positioned(
             top: 30,
             left: 20,
@@ -199,21 +239,20 @@ class _JugarPageState extends State<JugarPage> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.black87.withOpacity(0.7),
+                color: Colors.black87,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 🔙 Botón regresar
+                  // Botón regresar
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () {
                       Navigator.pop(context);
                     },
                   ),
-
-                  // ❤️ Vidas
+                  // Vidas
                   Row(
                     children: List.generate(
                       lives,
@@ -221,13 +260,13 @@ class _JugarPageState extends State<JugarPage> {
                     ),
                   ),
 
-                  // ⭐ Puntaje
+                  // Puntaje
                   Text(
                     "Score: $score",
                     style: const TextStyle(color: Colors.white, fontSize: 18),
                   ),
 
-                  // ⏱ Tiempo
+                  // Tiempo
                   Text(
                     "⏱ $elapsedTime s",
                     style: const TextStyle(color: Colors.white, fontSize: 18),
@@ -237,15 +276,14 @@ class _JugarPageState extends State<JugarPage> {
             ),
           ),
 
-          // 🗑️ Basurero
-          ...fallingObjects,
+          // Basurero
           Positioned(
-            bottom: 100,
+            bottom: 90,
             left: trashLeft,
-            child: TrashBin(width: trashWidth, color: currentTrashColor),
+            child: TrashBin(width: trashWidth, height: trashHeight, color: currentTrashColor),
           ),
 
-          // 🎮 Controles
+          // Controles
           _buildControls(),
         ],
       ),
@@ -257,11 +295,14 @@ class _JugarPageState extends State<JugarPage> {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 100,
+      height: 90,
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.brown[300], // 🌱 Color tierra
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/ground.jpg"),
+            fit: BoxFit.cover,
+            alignment: Alignment.topLeft,
+          ),
         ),
         child: Column(
           children: [
@@ -315,32 +356,5 @@ class _JugarPageState extends State<JugarPage> {
     );
   }
 
-  Future<void> saveStats({required bool won}) async {
-  final stats = {
-    "jugador": "Player",
-    "points": score,
-    "vidas_restantes": lives,
-    "play_time": elapsedTime.toDouble(),
-    "objetos_reciclados": score,
-    "objetos_toxicos": 0, 
-    "errors": lives < 0 ? 0 : 0, 
-  };
-
-  try {
-    final response = await http.post(
-      Uri.parse("http://localhost:8000/stats/add"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(stats),
-    );
-
-    if (response.statusCode == 200) {
-      print("Estadísticas guardadas correctamente");
-    } else {
-      print("Error guardando estadísticas: ${response.statusCode}");
-    }
-  } catch (e) {
-    print("Error enviando estadísticas: $e");
-  }
-}
-
+  
 }

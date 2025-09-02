@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import score_routes, stats_routes, difficulty_routes
+from app.routes import score_routes, stats_routes, difficulty_routes, trash_routes
 from random import choice, uniform
 
 app = FastAPI(
@@ -24,20 +24,11 @@ app.add_middleware(
     allow_headers=["*"],          # Permitir todos los headers
 )
 
-# Incluir routers
 app.include_router(score_routes.router)
 app.include_router(stats_routes.router)
 app.include_router(difficulty_routes.router)
+app.include_router(trash_routes.router)
 
-colors = ["verde", "azul", "negro"]
-
-# Ruta raíz para prueba rápida
 @app.get("/")
 def root():
     return {"message": "API del juego de reciclaje funcionando"}
-
-@app.get("/generate_trash")
-def generate_trash():
-    color = choice(colors)
-    speed = round(uniform(2.0, 3.0), 2)  # velocidad entre 2.0 y 5.0
-    return {"color": color, "speed": speed}

@@ -1,10 +1,12 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class Stats(BaseModel):
-    jugador: str
+    created_at: str
+    win: bool
     points: int
     vidas_restantes: int
     play_time: float
-    objetos_reciclados: int
-    objetos_toxicos: int
-    errors: int
+    objetos_verdes: int
+    objetos_azules: int
+    objetos_negros: int

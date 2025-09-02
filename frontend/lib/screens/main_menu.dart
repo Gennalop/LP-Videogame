@@ -14,6 +14,7 @@ class MainMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF74ebd5), Color(0xFFACB6E5)],
@@ -25,31 +26,7 @@ class MainMenu extends StatelessWidget {
           child: SingleChildScrollView(
           child: Column(
             children: [
-              // ---- Puntuación arriba a la derecha ----
-              /*
-              Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  margin: const EdgeInsets.all(12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4,
-                        offset: Offset(2, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    "Mejor: 150 ⭐",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              */
+
               const SizedBox(height: 40),
 
               // ---- Logo y título ----
@@ -94,7 +71,7 @@ class MainMenu extends StatelessWidget {
               ),
               MenuButton(
                 text: "Tus estadísticas",
-                page: const EstadisticasPage(jugador: "Player"),
+                page: const EstadisticasPage(),
                 backgroundColor: Colors.green,
                 icon: Icons.bar_chart,
                 textColor: Colors.white,

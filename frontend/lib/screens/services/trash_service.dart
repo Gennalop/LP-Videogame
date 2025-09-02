@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class TrashService {
   static Future<Map<String, dynamic>> fetchTrashData() async {
-    final url = Uri.parse("http://localhost:8000/generate_trash");
+    final url = Uri.parse("http://localhost:8000/trash/generate_trash");
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
